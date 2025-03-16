@@ -1,0 +1,23 @@
+# Git files
+.git
+.github
+.gitignore
+
+# Build artifacts
+cpp/build
+**/__pycache__
+**/*.o
+**/*.a
+**/*.so
+**/*.exe
+
+# Editor files
+.vscode
+.idea
+**/*.swp
+**/*~
+
+# Test reports
+**/*.html
+**/*.xml
+acceptance_tests/.pytest_cache

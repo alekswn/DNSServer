@@ -1,16 +1,25 @@
 # DNS Server Implementation
 
 ## Overview
-This project implements a DNS server based on RFC 1035. The server handles DNS queries, responds to requests, and manages DNS records.
+This project implements a DNS server based on RFC 1035. The server handles DNS queries, responds to requests, and manages DNS records. It's built using modern C++20 features for improved performance and maintainability.
 
 ## Project Structure
 - `cpp/` - C++ implementation of the DNS server
   - `src/` - Source code for the DNS server
-  - `tests/` - Unit tests using Google Test
-  - `CMakeLists.txt` - CMake build configuration
-  - `Makefile` - Simple Makefile for building without CMake
+  - `tests/` - Unit tests using Catch2
+  - `Makefile` - Makefile for building with clang++
 - `acceptance_tests/` - Python-based acceptance tests for protocol compliance
 - `justfile` - Task runner for common operations
+- `.github/workflows/` - GitHub Actions CI configuration
+
+## Modern C++ Features
+
+This implementation leverages C++20 features:
+- `std::string_view` for zero-copy string operations
+- `std::span` for safer buffer handling
+- Strongly typed enums for record types
+- Const-correctness throughout the codebase
+- Compiler warnings treated as errors for high code quality
 
 ## Quick Start with Just
 
@@ -46,13 +55,22 @@ The project uses [just](https://github.com/casey/just) as a task runner to simpl
    just run
    ```
 
+## Continuous Integration
+
+This project uses GitHub Actions for continuous integration. The CI pipeline:
+- Builds the DNS server with clang++
+- Runs all unit tests
+- Runs acceptance tests to verify protocol compliance
+
+The configuration is in `.github/workflows/ci.yml`.
+
 ## C++ Implementation
 
 ### Requirements
-- C++11 or later
-- g++ compiler
+- C++20 or later
+- clang++ compiler
 - CMake 3.10 or later (for building tests)
-- Internet connection (for fetching Google Test during test build)
+- Internet connection (for fetching Catch2 during test build)
 
 ### Building the Project
 #### Using Makefile

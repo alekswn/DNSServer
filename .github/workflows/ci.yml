@@ -1,0 +1,43 @@
+name: DNS Server CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential clang-14 libc++-dev python3-pip curl
+    
+    - name: Install just command runner
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to $HOME/.local/bin
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+    
+    - name: Build DNS Server
+      run: just build
+    
+    - name: Run unit tests
+      run: just test-cpp
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r acceptance_tests/requirements.txt
+    
+    - name: Run acceptance tests
+      run: just test-acceptance
