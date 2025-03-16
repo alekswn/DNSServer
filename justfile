@@ -8,21 +8,15 @@ default:
 
 # Build the C++ implementation
 build:
-    mkdir -p cpp/build
-    cd cpp/build && cmake .. && make
+    cd cpp && mkdir -p build && make
 
 # Clean build artifacts
 clean:
-    rm -rf cpp/build
+    cd cpp && make clean
 
 # Run the C++ unit tests
 test-cpp: build
-    cd cpp/build && ./dns_server_test
-    cd cpp/build && ./dns_record_test
-
-# Run all unit tests with ctest
-test-cpp-all: build
-    cd cpp/build && ctest
+    cd cpp && make test
 
 # Install Python dependencies for acceptance tests
 setup-acceptance-tests:
@@ -38,7 +32,7 @@ test-acceptance-report: build setup-acceptance-tests
 
 # Run the DNS server
 run: build
-    cd cpp/build && ./dns_server
+    cd cpp && make run
 
 # Run all tests (unit tests and acceptance tests)
 test-all: test-cpp test-acceptance
