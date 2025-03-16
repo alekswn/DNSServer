@@ -333,7 +333,11 @@ int main() {
     server.addRecord("ns1.example.com", RecordType::A, "192.0.2.3");
     server.addRecord("ns2.example.com", RecordType::A, "192.0.2.4");
     server.addRecord("www.example.com", "CNAME", "example.com");
+    // Add A record for www.example.com to support direct resolution
+    server.addRecord("www.example.com", RecordType::A, "192.0.2.1");
     server.addRecord("test.example.com", RecordType::A, "192.0.2.5");
+    // Add PTR record for reverse lookup
+    server.addRecord("1.2.0.192.in-addr.arpa", "PTR", "example.com");
     
     // Create UDP socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
