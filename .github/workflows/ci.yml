@@ -16,18 +16,12 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential clang-14 libc++-dev python3-pip curl
+        sudo apt-get install -y build-essential clang libc++-dev python3-pip curl
     
     - name: Install just command runner
       run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to $HOME/.local/bin
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-    
-    - name: Build DNS Server
-      run: just build
-    
-    - name: Run unit tests
-      run: just test-cpp
+        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sudo bash -s -- --to /usr/local/bin
+        just --version
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -39,5 +33,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r acceptance_tests/requirements.txt
     
+    - name: List project files
+      run: ls -la
+    
+    - name: Display justfile content
+      run: cat justfile
+    
+    - name: Build DNS Server manually
+      run: |
+        cd cpp
+        mkdir -p build
+        make
+      
+    - name: Run unit tests manually
+      run: |
+        cd cpp
+        make test
+    
     - name: Run acceptance tests
-      run: just test-acceptance
+      run: |
+        cd acceptance_tests
+        python3 -m pytest -v
