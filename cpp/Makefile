@@ -1,8 +1,8 @@
 # Makefile for DNS Server and tests with Catch2
 
 # Compiler and flags
-CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -g
+CXX = clang++
+CXXFLAGS = -std=c++20 -Wall -Wextra -g -pedantic
 LDFLAGS = -pthread
 
 # Directories
@@ -75,10 +75,11 @@ $(CATCH2_HEADER):
 	@echo "Downloading Catch2 header..."
 	@curl -sSL $(CATCH2_URL) -o $(CATCH2_HEADER)
 
-# Test objects
+# Test main object
 $(TEST_MAIN_OBJ): $(TEST_MAIN_SRC) $(CATCH2_HEADER)
 	$(CXX) $(CXXFLAGS) -I$(CATCH2_DIR) -I$(SRC_DIR) -c $< -o $@
 
+# Test objects
 $(SERVER_TEST_OBJ): $(SERVER_TEST_SRC) $(CATCH2_HEADER)
 	$(CXX) $(CXXFLAGS) -I$(CATCH2_DIR) -I$(SRC_DIR) -c $< -o $@
 
