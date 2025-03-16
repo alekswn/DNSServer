@@ -1,4 +1,4 @@
-# Makefile for DNS Server and tests
+# Makefile for DNS Server and tests with Catch2
 
 # Compiler and flags
 CXX = g++
@@ -9,7 +9,7 @@ LDFLAGS = -pthread
 SRC_DIR = src
 TEST_DIR = tests
 BUILD_DIR = build
-GTEST_DIR = $(BUILD_DIR)/gtest
+CATCH2_DIR = $(BUILD_DIR)/catch2
 
 # Files
 SERVER_SRC = $(SRC_DIR)/dns_server.cpp
@@ -19,21 +19,21 @@ MAIN_OBJ = $(BUILD_DIR)/main.o
 
 SERVER_TEST_SRC = $(TEST_DIR)/dns_server_test.cpp
 RECORD_TEST_SRC = $(TEST_DIR)/dns_record_test.cpp
+TEST_MAIN_SRC = $(TEST_DIR)/test_main.cpp
 SERVER_TEST_OBJ = $(BUILD_DIR)/dns_server_test.o
 RECORD_TEST_OBJ = $(BUILD_DIR)/dns_record_test.o
+TEST_MAIN_OBJ = $(BUILD_DIR)/test_main.o
 
 # Targets
 SERVER_TARGET = $(BUILD_DIR)/dns_server
 LIB_TARGET = $(BUILD_DIR)/libdns_server.a
+ALL_TESTS_TARGET = $(BUILD_DIR)/run_tests
 SERVER_TEST_TARGET = $(BUILD_DIR)/dns_server_test
 RECORD_TEST_TARGET = $(BUILD_DIR)/dns_record_test
 
-# GoogleTest
-GTEST_REPO = https://github.com/google/googletest.git
-GTEST_TAG = release-1.12.1
-GTEST_LIB = $(GTEST_DIR)/lib/libgtest.a
-GTEST_MAIN_LIB = $(GTEST_DIR)/lib/libgtest_main.a
-GTEST_INCLUDE = $(GTEST_DIR)/include
+# Catch2 single header URL
+CATCH2_URL = https://github.com/catchorg/Catch2/releases/download/v2.13.10/catch.hpp
+CATCH2_HEADER = $(CATCH2_DIR)/catch.hpp
 
 # Default target
 all: prepare $(SERVER_TARGET)
@@ -44,6 +44,7 @@ everything: all tests
 # Prepare build directories
 prepare:
 	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(CATCH2_DIR)
 
 # Clean build artifacts
 clean:
@@ -68,40 +69,33 @@ $(SERVER_TARGET): $(MAIN_OBJ) $(LIB_TARGET)
 run: $(SERVER_TARGET)
 	$(SERVER_TARGET)
 
-# GoogleTest setup
-$(GTEST_DIR):
-	@mkdir -p $(GTEST_DIR)
-	@echo "Downloading GoogleTest..."
-	@git clone -b $(GTEST_TAG) --depth 1 $(GTEST_REPO) $(GTEST_DIR)/src
-	@cd $(GTEST_DIR)/src && mkdir -p build && cd build && \
-	cmake .. && make
-	@mkdir -p $(GTEST_DIR)/lib $(GTEST_DIR)/include
-	@cp $(GTEST_DIR)/src/build/lib/libgtest*.a $(GTEST_DIR)/lib/
-	@cp -r $(GTEST_DIR)/src/googletest/include/gtest $(GTEST_DIR)/include/
+# Catch2 Header
+$(CATCH2_HEADER):
+	@mkdir -p $(CATCH2_DIR)
+	@echo "Downloading Catch2 header..."
+	@curl -sSL $(CATCH2_URL) -o $(CATCH2_HEADER)
 
 # Test objects
-$(SERVER_TEST_OBJ): $(SERVER_TEST_SRC) $(GTEST_DIR)
-	$(CXX) $(CXXFLAGS) -I$(GTEST_INCLUDE) -I$(SRC_DIR) -c $< -o $@
+$(TEST_MAIN_OBJ): $(TEST_MAIN_SRC) $(CATCH2_HEADER)
+	$(CXX) $(CXXFLAGS) -I$(CATCH2_DIR) -I$(SRC_DIR) -c $< -o $@
 
-$(RECORD_TEST_OBJ): $(RECORD_TEST_SRC) $(GTEST_DIR)
-	$(CXX) $(CXXFLAGS) -I$(GTEST_INCLUDE) -I$(SRC_DIR) -c $< -o $@
+$(SERVER_TEST_OBJ): $(SERVER_TEST_SRC) $(CATCH2_HEADER)
+	$(CXX) $(CXXFLAGS) -I$(CATCH2_DIR) -I$(SRC_DIR) -c $< -o $@
+
+$(RECORD_TEST_OBJ): $(RECORD_TEST_SRC) $(CATCH2_HEADER)
+	$(CXX) $(CXXFLAGS) -I$(CATCH2_DIR) -I$(SRC_DIR) -c $< -o $@
 
 # Test executables
-$(SERVER_TEST_TARGET): $(SERVER_TEST_OBJ) $(LIB_TARGET) $(GTEST_DIR)
-	$(CXX) $(CXXFLAGS) $< $(LIB_TARGET) $(GTEST_LIB) $(GTEST_MAIN_LIB) -o $@ $(LDFLAGS)
-
-$(RECORD_TEST_TARGET): $(RECORD_TEST_OBJ) $(LIB_TARGET) $(GTEST_DIR)
-	$(CXX) $(CXXFLAGS) $< $(LIB_TARGET) $(GTEST_LIB) $(GTEST_MAIN_LIB) -o $@ $(LDFLAGS)
+$(ALL_TESTS_TARGET): $(TEST_MAIN_OBJ) $(SERVER_TEST_OBJ) $(RECORD_TEST_OBJ) $(LIB_TARGET)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 # Build all tests
-tests: $(SERVER_TEST_TARGET) $(RECORD_TEST_TARGET)
+tests: $(ALL_TESTS_TARGET)
 
 # Run tests
 test: tests
 	@echo "Running DNS Server Tests..."
-	@$(SERVER_TEST_TARGET)
-	@echo "Running DNS Record Tests..."
-	@$(RECORD_TEST_TARGET)
+	@$(ALL_TESTS_TARGET)
 
 # Install target (optional)
 install: $(SERVER_TARGET)
