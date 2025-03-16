@@ -10,6 +10,41 @@ This project implements a DNS server based on RFC 1035. The server handles DNS q
   - `CMakeLists.txt` - CMake build configuration
   - `Makefile` - Simple Makefile for building without CMake
 - `acceptance_tests/` - Python-based acceptance tests for protocol compliance
+- `justfile` - Task runner for common operations
+
+## Quick Start with Just
+
+The project uses [just](https://github.com/casey/just) as a task runner to simplify common operations. To get started:
+
+1. Install just:
+   ```bash
+   # On Ubuntu/Debian
+   apt install just
+   
+   # On macOS
+   brew install just
+   ```
+
+2. Run available commands:
+   ```bash
+   # List all available commands
+   just
+   
+   # Build the C++ implementation
+   just build
+   
+   # Run C++ unit tests
+   just test-cpp
+   
+   # Run acceptance tests
+   just test-acceptance
+   
+   # Run all tests
+   just test-all
+   
+   # Run the DNS server
+   just run
+   ```
 
 ## C++ Implementation
 
@@ -35,10 +70,20 @@ cmake ..
 make
 ```
 
+#### Using Just
+```bash
+just build
+```
+
 ### Running the Server
 ```bash
 cd cpp/build
 ./dns_server
+```
+
+Or with just:
+```bash
+just run
 ```
 
 ### Running the Unit Tests
@@ -46,6 +91,11 @@ cd cpp/build
 cd cpp/build
 ./dns_server_test
 ./dns_record_test
+```
+
+Or with just:
+```bash
+just test-cpp
 ```
 
 ## Acceptance Tests
@@ -60,10 +110,20 @@ cd acceptance_tests
 pip install -r requirements.txt
 ```
 
+Or with just:
+```bash
+just setup-acceptance-tests
+```
+
 ### Running the Acceptance Tests
 ```bash
 cd acceptance_tests
 pytest -v
+```
+
+Or with just:
+```bash
+just test-acceptance
 ```
 
 ## DNS Protocol Compliance
