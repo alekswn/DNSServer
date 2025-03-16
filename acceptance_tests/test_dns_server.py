@@ -9,7 +9,7 @@ import time
 
 # Default server settings
 SERVER_IP = '127.0.0.1'
-SERVER_PORT = 53  # Standard DNS port
+SERVER_PORT = 5353  # Using non-privileged port
 
 class TestDNSServer:
     """Acceptance tests for DNS server implementation based on RFC 1035."""

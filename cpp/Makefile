@@ -2,7 +2,7 @@
 
 # Compiler and flags
 CXX = clang++
-CXXFLAGS = -std=c++20 -Wall -Wextra -g -pedantic
+CXXFLAGS = -std=c++20 -Wall -Wextra -g -pedantic -Werror
 LDFLAGS = -pthread
 
 # Directories

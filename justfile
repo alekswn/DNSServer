@@ -24,11 +24,11 @@ setup-acceptance-tests:
 
 # Run the Python acceptance tests
 test-acceptance: build setup-acceptance-tests
-    cd acceptance_tests && python -m pytest -v
+    cd acceptance_tests && python3 -m pytest -v
 
 # Generate HTML report for acceptance tests
 test-acceptance-report: build setup-acceptance-tests
-    cd acceptance_tests && python -m pytest --html=report.html
+    cd acceptance_tests && python3 -m pytest --html=report.html
 
 # Run the DNS server
 run: build

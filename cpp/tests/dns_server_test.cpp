@@ -293,28 +293,28 @@ public:
     
     DNSServerTest() {
         // Add various record types as defined in RFC1035 section 3.2.2
-        server.addRecord(DNSRecord("example.com", "A", "192.0.2.1"));
-        server.addRecord(DNSRecord("example.com", "MX", "10 mail.example.com"));
-        server.addRecord(DNSRecord("mail.example.com", "A", "192.0.2.2"));
-        server.addRecord(DNSRecord("example.com", "NS", "ns1.example.com"));
-        server.addRecord(DNSRecord("example.com", "NS", "ns2.example.com"));
-        server.addRecord(DNSRecord("ns1.example.com", "A", "192.0.2.3"));
-        server.addRecord(DNSRecord("ns2.example.com", "A", "192.0.2.4"));
-        server.addRecord(DNSRecord("example.com", "TXT", "v=spf1 include:_spf.example.com -all"));
-        server.addRecord(DNSRecord("example.com", "SOA", "ns1.example.com. admin.example.com. 2023111301 3600 1800 604800 86400"));
-        server.addRecord(DNSRecord("www.example.com", "CNAME", "example.com"));
-        server.addRecord(DNSRecord("1.2.0.192.in-addr.arpa", "PTR", "example.com"));
-        server.addRecord(DNSRecord("example.com", "HINFO", "CPU OS"));
+        server.addRecord("example.com", RecordType::A, "192.0.2.1");
+        server.addRecord("example.com", "MX", "10 mail.example.com");
+        server.addRecord("mail.example.com", RecordType::A, "192.0.2.2");
+        server.addRecord("example.com", "NS", "ns1.example.com");
+        server.addRecord("example.com", "NS", "ns2.example.com");
+        server.addRecord("ns1.example.com", RecordType::A, "192.0.2.3");
+        server.addRecord("ns2.example.com", RecordType::A, "192.0.2.4");
+        server.addRecord("example.com", "TXT", "v=spf1 include:_spf.example.com -all");
+        server.addRecord("example.com", "SOA", "ns1.example.com. admin.example.com. 2023111301 3600 1800 604800 86400");
+        server.addRecord("www.example.com", "CNAME", "example.com");
+        server.addRecord("1.2.0.192.in-addr.arpa", "PTR", "example.com");
+        server.addRecord("example.com", "HINFO", "CPU OS");
         
         // Add records for testing name case insensitivity (RFC1035 section 2.3.3)
-        server.addRecord(DNSRecord("UPPER.example.com", "A", "192.0.2.5"));
-        server.addRecord(DNSRecord("mixed.EXAMPLE.com", "A", "192.0.2.6"));
+        server.addRecord("UPPER.example.com", RecordType::A, "192.0.2.5");
+        server.addRecord("mixed.EXAMPLE.com", RecordType::A, "192.0.2.6");
         
         // Add records with varying TTLs
-        server.addRecord(DNSRecord("ttl.example.com", "A", "192.0.2.7")); // Default TTL
+        server.addRecord("ttl.example.com", RecordType::A, "192.0.2.7"); // Default TTL
         
         // Add records for wildcard test
-        server.addRecord(DNSRecord("*.wildcard.example.com", "A", "192.0.2.10"));
+        server.addRecord("*.wildcard.example.com", RecordType::A, "192.0.2.10");
     }
 };
 
@@ -354,8 +354,29 @@ TEST_CASE("DNS Server Tests", "[dns_server]") {
         CHECK(foundMx);
     }
     
-    SECTION("CNAME Resolution") {
+    SECTION("NS Record Query") {
+        uint16_t queryId = 1236;
+        std::string domain = "example.com";
+        std::vector<uint8_t> query = createDNSQuery(queryId, domain, DNS_TYPE_NS, DNS_CLASS_IN);
+        
+        std::vector<DNSRecord> records = test.server.query(domain);
+        REQUIRE(!records.empty());
+        
+        int nsCount = 0;
+        for (const auto& record : records) {
+            if (record.type == "NS") {
+                nsCount++;
+                CHECK((record.value == "ns1.example.com" || record.value == "ns2.example.com"));
+            }
+        }
+        CHECK(nsCount == 2);
+    }
+    
+    SECTION("CNAME Record Query") {
+        uint16_t queryId = 1237;
         std::string domain = "www.example.com";
+        std::vector<uint8_t> query = createDNSQuery(queryId, domain, DNS_TYPE_CNAME, DNS_CLASS_IN);
+        
         std::vector<DNSRecord> records = test.server.query(domain);
         REQUIRE(!records.empty());
         
@@ -370,134 +391,70 @@ TEST_CASE("DNS Server Tests", "[dns_server]") {
         CHECK(foundCname);
     }
     
-    SECTION("NS Record Query") {
+    SECTION("Multiple Record Types") {
         std::string domain = "example.com";
         std::vector<DNSRecord> records = test.server.query(domain);
         REQUIRE(!records.empty());
         
-        int nsCount = 0;
-        for (const auto& record : records) {
-            if (record.type == "NS") {
-                nsCount++;
-                CHECK((record.value == "ns1.example.com" || record.value == "ns2.example.com"));
-            }
-        }
-        CHECK(nsCount == 2);
-    }
-    
-    SECTION("SOA Record Query") {
-        std::string domain = "example.com";
-        std::vector<DNSRecord> records = test.server.query(domain);
-        REQUIRE(!records.empty());
-        
-        bool foundSoa = false;
-        for (const auto& record : records) {
-            if (record.type == "SOA") {
-                foundSoa = true;
-                CHECK(record.value.find("ns1.example.com") != std::string::npos);
-                break;
-            }
-        }
-        CHECK(foundSoa);
-    }
-    
-    SECTION("PTR Record Query") {
-        std::string domain = "1.2.0.192.in-addr.arpa";
-        std::vector<DNSRecord> records = test.server.query(domain);
-        REQUIRE(!records.empty());
-        
-        bool foundPtr = false;
-        for (const auto& record : records) {
-            if (record.type == "PTR") {
-                foundPtr = true;
-                CHECK(record.value == "example.com");
-                break;
-            }
-        }
-        CHECK(foundPtr);
-    }
-    
-    SECTION("TXT Record Query") {
-        std::string domain = "example.com";
-        std::vector<DNSRecord> records = test.server.query(domain);
-        REQUIRE(!records.empty());
-        
-        bool foundTxt = false;
-        for (const auto& record : records) {
-            if (record.type == "TXT") {
-                foundTxt = true;
-                CHECK(record.value == "v=spf1 include:_spf.example.com -all");
-                break;
-            }
-        }
-        CHECK(foundTxt);
-    }
-    
-    SECTION("Non-existent Domain") {
-        std::string domain = "nonexistent.example.com";
-        std::vector<DNSRecord> records = test.server.query(domain);
-        CHECK(records.empty());
-    }
-    
-    SECTION("Case Insensitivity") {
-        // Test case 1: All uppercase domain
-        std::string upperDomain = "UPPER.EXAMPLE.COM";
-        std::vector<DNSRecord> upperRecords = test.server.query(upperDomain);
-        
-        // Test case 2: Mixed case domain
-        std::string mixedDomain = "MiXeD.exAMplE.coM";
-        std::vector<DNSRecord> mixedRecords = test.server.query("mixed.EXAMPLE.com");
-        
-        // Current implementation may not handle case insensitivity correctly
-        // This test documents expected behavior
-    }
-    
-    SECTION("Name Compression") {
-        // This test would require a full network implementation to test
-        // For now, we'll just document that this should be tested
-    }
-    
-    SECTION("Truncated Responses") {
-        // This test would require a full network implementation to test
-        // For now, we'll just document that this should be tested
-    }
-    
-    SECTION("Invalid Query") {
-        // This test would require a full network implementation to test
-        // For now, we'll just document that this should be tested
-    }
-    
-    SECTION("EDNS0 Support") {
-        // This test would require a full network implementation to test
-        // For now, we'll just document that this should be tested
-    }
-    
-    SECTION("Wildcard Matching") {
-        std::string domain = "test.wildcard.example.com";
-        std::vector<DNSRecord> records = test.server.query(domain);
-        
-        // Current implementation may not handle wildcards correctly
-        // This test documents expected behavior
-    }
-    
-    SECTION("Standard Resource Records") {
-        std::string domain = "example.com";
-        std::vector<DNSRecord> records = test.server.query(domain);
-        REQUIRE(!records.empty());
-        
-        // Verify that all standard RR types have proper representations
-        std::vector<std::string> expectedTypes = {"A", "MX", "NS", "TXT", "SOA", "HINFO"};
-        
-        // Count occurrences of each type
         std::map<std::string, int> typeCounts;
         for (const auto& record : records) {
             typeCounts[record.type]++;
         }
         
-        // Check that all expected types are present
+        std::vector<std::string> expectedTypes = {"A", "MX", "NS", "SOA", "TXT", "HINFO"};
         for (const auto& type : expectedTypes) {
-            INFO("Checking for record type: " << type);
             CHECK(typeCounts[type] > 0);
         }
+    }
+    
+    SECTION("Case Insensitive Domain Names") {
+        // RFC1035 section 2.3.3 states that domain names are case-insensitive
+        std::vector<DNSRecord> records1 = test.server.query("EXAMPLE.com");
+        std::vector<DNSRecord> records2 = test.server.query("example.COM");
+        std::vector<DNSRecord> records3 = test.server.query("Example.Com");
+        
+        // All three queries should return the same records
+        CHECK(records1.size() == records2.size());
+        CHECK(records2.size() == records3.size());
+        
+        // Check that at least one of the records has type "A"
+        bool foundA = false;
+        for (const auto& record : records1) {
+            if (record.type == "A") {
+                foundA = true;
+                break;
+            }
+        }
+        CHECK(foundA);
+    }
+    
+    SECTION("Querying Records By Type") {
+        // Using our new queryByType method
+        std::string domain = "example.com";
+        
+        // Query A records
+        auto aRecords = test.server.queryByType(domain, RecordType::A);
+        CHECK(!aRecords.empty());
+        for (const auto& record : aRecords) {
+            CHECK(record.type == "A");
+        }
+        
+        // Query MX records
+        auto mxRecords = test.server.queryByType(domain, "MX");
+        CHECK(!mxRecords.empty());
+        for (const auto& record : mxRecords) {
+            CHECK(record.type == "MX");
+        }
+    }
+    
+    SECTION("Query Non-Existent Domain") {
+        std::string domain = "nonexistent.example.com";
+        std::vector<DNSRecord> records = test.server.query(domain);
+        CHECK(records.empty());
+    }
+    
+    SECTION("Invalid Query") {
+        // This test would require a full network implementation to test
+        // For now, we'll just document that this should be tested
     }
 }

@@ -8,15 +8,15 @@ TEST_CASE("DNS Record Tests", "[dns_records]") {
     DNSServer server;
     
     // Add some basic test records
-    server.addRecord(DNSRecord("example.com", "A", "192.0.2.1"));
-    server.addRecord(DNSRecord("example.com", "MX", "mail.example.com"));
-    server.addRecord(DNSRecord("example.com", "NS", "ns.example.com"));
-    server.addRecord(DNSRecord("example.com", "TXT", "This is a test record"));
-    server.addRecord(DNSRecord("subdomain.example.com", "A", "192.0.2.2"));
+    server.addRecord("example.com", RecordType::A, "192.0.2.1");
+    server.addRecord("example.com", "MX", "mail.example.com");
+    server.addRecord("example.com", "NS", "ns.example.com");
+    server.addRecord("example.com", "TXT", "This is a test record");
+    server.addRecord("subdomain.example.com", RecordType::A, "192.0.2.2");
     
     SECTION("Add And Query A Record") {
         // Add a new A record
-        server.addRecord(DNSRecord("test.example.com", "A", "192.0.2.3"));
+        server.addRecord("test.example.com", RecordType::A, "192.0.2.3");
         
         // Query for the record
         std::vector<DNSRecord> results = server.query("test.example.com");
@@ -61,14 +61,13 @@ TEST_CASE("DNS Record Tests", "[dns_records]") {
     SECTION("Query Case Insensitive") {
         std::vector<DNSRecord> results = server.query("EXAMPLE.COM");
         
-        // The current implementation likely doesn't handle case insensitivity
-        // This test will help determine if it does or not
-        // REQUIRE(results.size() == 4);
+        // DNS domain names should be case insensitive per RFC1035
+        REQUIRE(results.size() == 4);
     }
     
     SECTION("Multiple Records Same Name And Type") {
-        server.addRecord(DNSRecord("multi.example.com", "A", "192.0.2.10"));
-        server.addRecord(DNSRecord("multi.example.com", "A", "192.0.2.11"));
+        server.addRecord("multi.example.com", RecordType::A, "192.0.2.10");
+        server.addRecord("multi.example.com", RecordType::A, "192.0.2.11");
         
         std::vector<DNSRecord> results = server.query("multi.example.com");
         
@@ -79,10 +78,29 @@ TEST_CASE("DNS Record Tests", "[dns_records]") {
         
         for (const auto& record : results) {
             if (record.value == "192.0.2.10") found10 = true;
-            else if (record.value == "192.0.2.11") found11 = true;
+            if (record.value == "192.0.2.11") found11 = true;
         }
         
         CHECK(found10);
         CHECK(found11);
+    }
+    
+    SECTION("Test queryByType Method") {
+        // Add different record types
+        server.addRecord("type-test.example.com", RecordType::A, "192.0.2.20");
+        server.addRecord("type-test.example.com", "MX", "mail.example.com");
+        server.addRecord("type-test.example.com", RecordType::NS, "ns.example.com");
+        
+        // Query specifically for A records
+        auto aRecords = server.queryByType("type-test.example.com", RecordType::A);
+        REQUIRE(aRecords.size() == 1);
+        CHECK(aRecords[0].type == "A");
+        CHECK(aRecords[0].value == "192.0.2.20");
+        
+        // Query specifically for MX records
+        auto mxRecords = server.queryByType("type-test.example.com", "MX");
+        REQUIRE(mxRecords.size() == 1);
+        CHECK(mxRecords[0].type == "MX");
+        CHECK(mxRecords[0].value == "mail.example.com");
     }
 }
