@@ -1,92 +1,75 @@
-# DNS Server Implementation in C++
+# DNS Server Implementation
 
 ## Overview
-This project implements a DNS server based on RFC 1035. The server will handle DNS queries, respond to requests, and manage DNS records.
+This project implements a DNS server based on RFC 1035. The server handles DNS queries, responds to requests, and manages DNS records.
 
-## Directory Structure
-- `src/` - Contains the source code for the DNS server.
-- `include/` - Contains header files.
-- `tests/` - Contains unit tests for the server.
-- `Makefile` - Build script to compile the project.
-- `README.md` - Project documentation.
-- `CMakeLists.txt` - CMake build configuration for the project and tests.
+## Project Structure
+- `cpp/` - C++ implementation of the DNS server
+  - `src/` - Source code for the DNS server
+  - `tests/` - Unit tests using Google Test
+  - `CMakeLists.txt` - CMake build configuration
+  - `Makefile` - Simple Makefile for building without CMake
+- `acceptance_tests/` - Python-based acceptance tests for protocol compliance
 
-## Requirements
+## C++ Implementation
+
+### Requirements
 - C++11 or later
 - g++ compiler
 - CMake 3.10 or later (for building tests)
 - Internet connection (for fetching Google Test during test build)
 
-## Building the Project
-### Using Makefile
-To build the project using the Makefile, run:
+### Building the Project
+#### Using Makefile
 ```bash
+cd cpp
 make
 ```
 
-### Using CMake
-To build the project and tests using CMake, run:
+#### Using CMake
 ```bash
-mkdir build
-cd build
-cmake ..
-make
-```
-
-## Running the Server
-To run the server, execute:
-```bash
-./dns_server
-```
-
-## Running the Tests
-The project includes a comprehensive test suite based on RFC1035 specifications. The test suite is built using Google Test framework and tests various aspects of DNS server functionality.
-
-### Building and Running Tests with CMake
-```bash
+cd cpp
 mkdir -p build
 cd build
 cmake ..
 make
 ```
 
-### Running Specific Tests
-After building the tests, you can run them individually:
+### Running the Server
 ```bash
-# Run all DNS server tests
-./dns_server_test
+cd cpp/build
+./dns_server
+```
 
-# Run DNS record handling tests
+### Running the Unit Tests
+```bash
+cd cpp/build
+./dns_server_test
 ./dns_record_test
 ```
 
-### Running All Tests
-You can also run all tests at once using CTest:
+## Acceptance Tests
+
+### Requirements
+- Python 3.7+
+- Packages listed in `acceptance_tests/requirements.txt`
+
+### Setup
 ```bash
-cd build
-ctest
+cd acceptance_tests
+pip install -r requirements.txt
 ```
 
-## Test Suite Overview
-The test suite consists of:
+### Running the Acceptance Tests
+```bash
+cd acceptance_tests
+pytest -v
+```
 
-1. **RFC1035 Compliance Tests**
-   - DNS message format and header flags testing
-   - Resource record type handling (A, MX, NS, CNAME, SOA, PTR, TXT)
-   - Domain name handling including case insensitivity
-   - DNS message compression tests
-   - Query and response validation
-
-2. **DNS Record Tests**
-   - Basic record addition and retrieval testing
-   - Multiple record handling
-   - Non-existent domain handling
-   - Case sensitivity handling
-
-## Notes on RFC1035 Compliance
-The test suite is designed to verify compliance with key aspects of RFC1035, which defines the Domain Name System specifications, including:
-
-- Message format and encoding (Section 4)
-- Resource Record definitions (Section 3)
-- Name handling and resolution (Section 2.3)
-- Query types and response codes
+## DNS Protocol Compliance
+The implementation aims to be fully compliant with RFC 1035 specifications, including:
+- Message format and header flags
+- Resource record types (A, MX, NS, CNAME, SOA, PTR, TXT)
+- Domain name handling with case insensitivity
+- DNS message compression
+- Error handling
