@@ -1,16 +1,17 @@
-#ifndef DNS_SERVER_H
-#define DNS_SERVER_H
+#pragma once
 
+#include <algorithm>
+#include <concepts>
+#include <cstdint>  // For uint8_t, uint16_t
+#include <functional>
+#include <map>
+#include <span>
+#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
-#include <span>
-#include <concepts>
-#include <functional>
-#include <stdexcept>
-#include <compare>
-#include <type_traits>
 
 // Enumeration for common DNS record types with string view conversion
 enum class RecordType {
@@ -162,5 +163,3 @@ namespace dns_packet {
         std::string readDomainName();
     };
 }
-
-#endif // DNS_SERVER_H
