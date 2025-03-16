@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <map>
 #include "../src/dns_server.h"
 
 // DNS Message Format Constants (RFC1035 Section 4)
